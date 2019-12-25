@@ -1,0 +1,100 @@
+// Block definition (there may be more than one block per file)
+FUNCTION_BLOCK water
+
+
+// Define input variables
+VAR_INPUT
+    temperature			 : REAL;
+	hand			 : REAL;
+	want                : REAL;
+	price 			 : REAL;
+END_VAR
+
+// Define output variable
+VAR_OUTPUT
+    toTemp : REAL;
+	toNapor : REAL;
+END_VAR
+
+
+// Fuzzify input variable 'temperature'
+FUZZIFY temperature
+    TERM cold 			:= (0, 1) (15, 0); 
+    TERM comfortable 	:= (13, 0) (20, 1) (23, 1) (30, 0);
+    TERM hot 			:= (23, 0) (50, 1);
+END_FUZZIFY
+
+// Fuzzify input variable 'hand'
+FUZZIFY hand
+    TERM low 	 := (0, 1) (5, 1) (17, 0);
+	TERM normal	 := (10, 0) (30, 1) (40, 0);
+    TERM high	 := (32, 0) (50, 1);
+END_FUZZIFY
+
+// Fuzzify input variable 'want'
+FUZZIFY want
+    TERM cold 		    := (0, 1) (18, 0) ; 
+    TERM comfortable    := (11, 0) (20, 1) (23, 1) (30, 0);
+    TERM hot		 	:= (23, 0) (50, 1);
+END_FUZZIFY
+
+// Fuzzify input variable 'price' im square meters
+FUZZIFY price
+    TERM small 		:= (0, 1) (20, 1) (25, 0);
+	TERM normal 	:= (20, 0) (30, 1) (40, 1) (43, 0);
+    TERM big 		:= (38, 0) (50, 1);
+END_FUZZIFY
+
+
+// Defzzzify output variable 'toTemp'
+DEFUZZIFY toTemp
+    TERM cool       := (0, 0) (3, 1) (6, 0);
+    TERM norm    	:= (4, 0) (9, 1) (14, 0);
+    TERM warmer 	:= (12, 0) (20, 1) (30, 0);
+    
+    METHOD : COG;	// Use 'Center Of Gravity' defuzzification method
+    
+    DEFAULT := 0;	// Default value is 0 (if no rule activates defuzzifier)
+END_DEFUZZIFY
+
+// Defzzzify output variable 'toNapor'
+DEFUZZIFY toNapor
+    TERM litlle := (0, 0) (3, 1) (7, 0);
+    TERM norm 	  := (5, 0) (9, 1) (16, 0);
+    TERM big 	      := (14, 0) (20, 1) (30, 0);
+    
+    METHOD : COG;	// Use 'Center Of Gravity' defuzzification method
+    
+    DEFAULT := 0;	// Default value is 0 (if no rule activates defuzzifier)
+END_DEFUZZIFY
+
+
+RULEBLOCK No1
+	AND : MIN;	// Use 'min' for 'and' (also implicit use 'max' for 'or' to fulfill DeMorgan's Law)
+    
+    ACT : MIN;	// Use 'min' activation method
+    
+    ACCU : MAX;	// Use 'max' accumulation method
+
+    RULE 1 :IF temperature IS cold AND want IS hot AND (hand IS normal OR price IS small)
+             THEN toNapor IS big; 
+
+    RULE 2 : IF temperature IS cold AND want IS hot AND hand IS normal
+             THEN toTemp IS warmer; 
+			 
+	RULE 3 : IF temperature IS comfortable AND want IS cold AND (hand IS normal OR price IS small)
+             THEN toNapor IS big; 
+		
+	RULE 4 : IF temperature IS comfortable AND want IS cold AND hand IS normal
+             THEN toTemp IS cool; 
+
+    RULE 5 : IF temperature IS hot AND want IS cold AND hand IS normal
+             THEN toTemp IS cool; 
+			 
+	RULE 6 :IF temperature IS hot AND want IS cold AND (hand IS normal OR price IS big)
+             THEN toNapor IS litlle; 
+			 
+END_RULEBLOCK
+
+
+END_FUNCTION_BLOCK 
